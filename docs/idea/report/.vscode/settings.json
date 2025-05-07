@@ -1,0 +1,80 @@
+{
+  "[latex]": {
+    "editor.formatOnPaste": false,
+    "editor.suggestSelection": "recentlyUsedByPrefix",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "gitlens.codeLens.scopes": [
+      "document"
+    ],
+  },
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.rulers": [
+    100
+  ],
+  "files.associations": {
+    "*.tex": "latex",
+    "*.cls": "latex",
+    "*.sty": "latex",
+    "*.lbx": "latex"
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/build/**": true,
+    "**/build/*.pdf": false,
+  },
+  "search.exclude": {
+    "**/build/**": true,
+  },
+  "files.eol": "\n",
+  "github.copilot.editor.enableAutoCompletions": true,
+  "latex-workshop.bibtex-format.sort.enabled": true,
+  "latex-workshop.linting.chktex.enabled": true,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoClean.run": "onFailed",
+  "latex-workshop.latex.clean.subfolder.enabled": true,
+  "latex-workshop.latex.external.build.command": "make",
+  "latex-workshop.latex.texDirs": [
+    "%WORKSPACE_DIR%/texmf"
+  ],
+  "latex-workshop.latex.outDir": "%DIR%/build",
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk 🔃",
+      "tools": [
+        "latexmk"
+      ]
+    },
+    {
+      "name": "make",
+      "tools": [
+        "make"
+      ]
+    },
+  ],
+  "latex-workshop.latex.tools": [
+    {
+      "command": "make",
+      "name": "make"
+    },
+    {
+      "args": [
+        "%DOC%"
+      ],
+      "command": "latexmk",
+      "name": "latexmk"
+    },
+  ],
+  "latex-workshop.formatting.latex": "latexindent",
+  "latex-workshop.formatting.latexindent.args": [
+    "-c",
+    "%OUTDIR%/",
+    "-l",
+    "%TMPFILE%"
+  ],
+  "latex-workshop.view.pdf.viewer": "tab",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "vim.textwidth": 100
+}

@@ -1,0 +1,9 @@
+defaultIndent: "\t"
+modifyLineBreaks:
+  textWrapOptions:
+    columns: 100
+noIndentBlock:
+  noindent: 1
+removeTrailingWhitespace:
+  beforeProcessing: 1
+onlyOneBackUp: 1

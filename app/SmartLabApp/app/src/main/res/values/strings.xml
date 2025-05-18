@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Smart Lab</string>
+    <string name="total_occupancy">Total Occupancy</string>
+    <string name="currently_moving">Currently Moving</string>
+    <string name="noise_level">Noise Level</string>
+    <string name="average_noise_level">Average Noise Level</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="info">Info</string>
+    <string name="scan_barcode">Scan Barcode</string>
+    <string name="cancel">Cancel</string>
+    <string name="next">Next</string>
+    <string name="back_button">Back Button</string>
+    <string name="send">Send</string>
+</resources>

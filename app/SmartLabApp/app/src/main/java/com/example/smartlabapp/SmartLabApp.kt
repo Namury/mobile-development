@@ -34,9 +34,6 @@ fun SmartLabApp(
     viewModel: SensorViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
-    // Get current back stack entry
-    val backStackEntry by navController.currentBackStackEntryAsState()
-
     SmartLabNavigationBar()
 }
 

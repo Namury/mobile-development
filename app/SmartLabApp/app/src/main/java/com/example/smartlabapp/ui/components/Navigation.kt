@@ -19,13 +19,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.smartlabapp.ui.DashboardScreen
+import com.example.smartlabapp.ui.DeviceViewModel
 import com.example.smartlabapp.ui.InfoScreen
 import com.example.smartlabapp.ui.ScanBarcodeScreen
+import com.example.smartlabapp.ui.SensorViewModel
 
 enum class Destination(
     val route: String,
@@ -41,7 +44,11 @@ enum class Destination(
 
 @Preview
 @Composable
-fun SmartLabNavigationBar(modifier: Modifier = Modifier) {
+fun SmartLabNavigationBar(
+    modifier: Modifier = Modifier,
+    deviceViewModel: DeviceViewModel = viewModel(),
+    sensorViewModel: SensorViewModel = viewModel()
+) {
     val navController = rememberNavController()
     val startDestination = Destination.DASHBOARD
     var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
@@ -69,7 +76,7 @@ fun SmartLabNavigationBar(modifier: Modifier = Modifier) {
             }
         }
     ) { contentPadding ->
-        AppNavHost(navController, startDestination, modifier = Modifier.padding(contentPadding))
+        AppNavHost(navController, startDestination, modifier = Modifier.padding(contentPadding), deviceViewModel, sensorViewModel)
     }
 }
 
@@ -77,7 +84,9 @@ fun SmartLabNavigationBar(modifier: Modifier = Modifier) {
 fun AppNavHost(
     navController: NavHostController,
     startDestination: Destination,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    deviceViewModel: DeviceViewModel,
+    sensorViewModel: SensorViewModel,
 ) {
     NavHost(
         navController,
@@ -86,9 +95,9 @@ fun AppNavHost(
         Destination.entries.forEach { destination ->
             composable(destination.route) {
                 when (destination) {
-                    Destination.DASHBOARD -> DashboardScreen()
-                    Destination.SCANBARCODE -> ScanBarcodeScreen()
-                    Destination.INFO -> InfoScreen()
+                    Destination.DASHBOARD -> DashboardScreen(modifier, deviceViewModel)
+                    Destination.SCANBARCODE -> ScanBarcodeScreen(modifier, deviceViewModel)
+                    Destination.INFO -> InfoScreen(modifier, deviceViewModel, sensorViewModel)
                 }
             }
         }

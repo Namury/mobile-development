@@ -20,8 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartlabapp.R
 import com.example.smartlabapp.data.SensorReading
+import com.example.smartlabapp.ui.DeviceViewModel
 import com.example.smartlabapp.ui.components.FeatureThatRequiresMicrophonePermission
 import com.example.smartlabapp.ui.components.NeedPermissionScreen
 import com.example.smartlabapp.ui.theme.SmartLabAppTheme
@@ -33,7 +35,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 @Composable
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
 fun InfoScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    deviceViewModel: DeviceViewModel,
+    sensorViewModel: SensorViewModel,
 ) {
     val ctx = LocalContext.current
     var sensorManager: SensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -71,7 +75,7 @@ fun InfoScreen(
                         dimensionResource(id = R.dimen.padding_medium)
                     )
                 ) {
-                    SensorReading(sensorManager)
+                    SensorReading(sensorManager, deviceViewModel, sensorViewModel)
                 }
             }
         }
@@ -87,7 +91,9 @@ fun InfoScreenPreview() {
         InfoScreen(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(dimensionResource(R.dimen.padding_medium))
+                .padding(dimensionResource(R.dimen.padding_medium)),
+            deviceViewModel = viewModel(),
+            sensorViewModel = viewModel(),
         )
     }
 }

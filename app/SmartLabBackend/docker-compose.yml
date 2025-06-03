@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: smart-lab-backend
+    environment:
+      DB_PG_HOST: postgres
+      DB_PG_PORT: 5432
+      DB_PG_USER: postgres
+      DB_PG_PASSWORD: postgres
+      DB_PG_NAME: smartlab_local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - smart-lab-network
+
+  postgres:
+    container_name: smart-lab-postgres
+    image: postgres:16
+    environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        PGDATA: /data/postgres
+    healthcheck:
+      test: [CMD-SHELL, "sh -c 'pg_isready -U postgres -d smartlab_local'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+       - ~/smartlab_pg_data:/data/postgres
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    command: ["postgres", "-c", "log_statement=all"]
+    networks:
+      - smart-lab-network
+  
+  pgadmin:
+    depends_on: 
+      - postgres
+    container_name: smart-lab-pgadmin
+    image: dpage/pgadmin4
+    environment:
+        PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+        PGADMIN_DEFAULT_PASSWORD: password
+    volumes:
+       - ~/smartlab_dbms_data:/root/.pgadmin
+    ports:
+      - "5051:80"
+    restart: unless-stopped
+    networks:
+      - smart-lab-network
+
+volumes:
+  pg-data:
+
+networks:
+  smart-lab-network:

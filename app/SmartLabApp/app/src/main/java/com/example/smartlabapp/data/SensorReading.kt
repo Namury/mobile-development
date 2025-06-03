@@ -9,6 +9,7 @@ import android.hardware.SensorManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -24,7 +25,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smartlabapp.models.api.CheckinRequest
+import com.example.smartlabapp.models.api.StoreSensorsRequest
+import com.example.smartlabapp.tools.DataCoordinator
+import com.example.smartlabapp.tools.checkinAPI
+import com.example.smartlabapp.tools.storeSensorsAPI
+import com.example.smartlabapp.ui.DeviceViewModel
+import com.example.smartlabapp.ui.SensorViewModel
 import com.example.smartlabapp.ui.theme.SmartLabAppTheme
+import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.log10
 import kotlin.math.sqrt
@@ -32,15 +42,44 @@ import kotlin.math.sqrt
 
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
 @Composable
-fun SensorReading(sensorManager: SensorManager){
-    GetMovementAndRotation(sensorManager)
-    GetAmbientLight(sensorManager)
-    GetAmbientNoise()
+fun SensorReading(
+    sensorManager: SensorManager,
+    deviceViewModel: DeviceViewModel,
+    sensorViewModel: SensorViewModel,
+    ){
+    GetMovementAndRotation(sensorManager, sensorViewModel)
+    GetAmbientLight(sensorManager, sensorViewModel)
+    GetAmbientNoise(sensorViewModel)
+
+    var storeSensorsStatus by remember {mutableStateOf(false)}
+    val ctx = LocalContext.current
+    val deviceUiState by deviceViewModel.uiState.collectAsState()
+    val sensorUiState by sensorViewModel.uiState.collectAsState()
+
+    if(!storeSensorsStatus) {
+        DataCoordinator.shared.storeSensorsAPI(
+            onSuccess = {
+                Toast.makeText(ctx, "Success Sync Sensor Data", Toast.LENGTH_SHORT).show()
+                storeSensorsStatus = true
+            },
+            onError = {Toast.makeText(ctx, "Error Sync Sensor Data", Toast.LENGTH_SHORT).show()},
+            request = StoreSensorsRequest(
+                deviceImei = deviceUiState.deviceUUID,
+                deviceID = deviceUiState.deviceID,
+                isMoving = sensorUiState.isMoving,
+                direction = sensorUiState.direction,
+                ambientLight = sensorUiState.ambientLight,
+                ambientNoise = sensorUiState.ambientNoise,
+                timestamp = ""
+            )
+        )
+        storeSensorsStatus=false
+    }
 }
 
 // Accelerometer
 @Composable
-fun GetMovementAndRotation(sensorManager: SensorManager) {
+fun GetMovementAndRotation(sensorManager: SensorManager, sensorViewModel: SensorViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
@@ -132,6 +171,11 @@ fun GetMovementAndRotation(sensorManager: SensorManager) {
             } else{
                 "North West"
             }
+
+            sensorViewModel.setDirectionState(
+                isMoving = accelDelta > 0.5,
+                direction = magnetometerStatus
+            )
         }
     }
 
@@ -142,7 +186,6 @@ fun GetMovementAndRotation(sensorManager: SensorManager) {
             sensorManager.unregisterListener(accelerometerListener, accelerometer)
             sensorManager.unregisterListener(accelerometerListener, magnetometer)
         }
-
         Lifecycle.State.INITIALIZED -> {
         }
         Lifecycle.State.CREATED -> {
@@ -187,7 +230,7 @@ private fun Double.toRotationInDegrees(): Int {
 
 // Light Sensor
 @Composable
-fun GetAmbientLight(sensorManager: SensorManager){
+fun GetAmbientLight(sensorManager: SensorManager, sensorViewModel: SensorViewModel){
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
@@ -199,14 +242,22 @@ fun GetAmbientLight(sensorManager: SensorManager){
 
         override fun onSensorChanged(event: SensorEvent?) {
             lightsensorStatus = event?.values!![0]
+            sensorViewModel.setAmbientLightState(
+                ambientLight = lightsensorStatus.toInt()
+            )
         }
     }
 
+    var isRegistered by remember {mutableStateOf(false)}
     when (lifecycleState) {
         Lifecycle.State.RESUMED -> {
-            sensorManager.registerListener(lightsensorListener, lightsensor, SensorManager.SENSOR_DELAY_NORMAL)
+            if(!isRegistered){
+                sensorManager.registerListener(lightsensorListener, lightsensor, SensorManager.SENSOR_DELAY_NORMAL)
+                isRegistered = true
+            }
         }
         Lifecycle.State.DESTROYED -> {
+            isRegistered = false
             sensorManager.unregisterListener(lightsensorListener, lightsensor)
         }
         Lifecycle.State.INITIALIZED -> {}
@@ -226,7 +277,7 @@ fun GetAmbientLight(sensorManager: SensorManager){
 // Microphone
 @Composable
 @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-fun GetAmbientNoise(){
+fun GetAmbientNoise(sensorViewModel: SensorViewModel){
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
@@ -262,6 +313,10 @@ fun GetAmbientNoise(){
     val amplitude = sum / audioBuffer.size
     val decibel = 20 * log10(amplitude)
 
+    sensorViewModel.setAmbientNoiseState(
+        ambientNoise = decibel.toInt()
+    )
+
     Column {
         Text(
             text = "Ambient Noise"
@@ -282,7 +337,7 @@ fun SensorReadingPreview() {
         ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
     SmartLabAppTheme {
-        SensorReading(sensorManager)
+        SensorReading(sensorManager, viewModel(), viewModel())
     }
 }
 

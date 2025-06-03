@@ -65,6 +65,26 @@ fun FeatureThatRequiresMicrophonePermission(
 }
 
 @Composable
+fun FeatureThatRequiresReadPhoneStatePermission(
+    deniedContent: @Composable (PermissionStatus.Denied) -> Unit,
+    grantedContent: @Composable () -> Unit
+) {
+
+    // Phone state permission state
+    val microphonePermissionState = rememberPermissionState(
+        Manifest.permission.READ_PHONE_STATE
+    )
+
+    val status = microphonePermissionState.status
+    AnimatedContent(targetState = status) { permissionStatus ->
+        when(permissionStatus) {
+            is PermissionStatus.Granted -> grantedContent()
+            is PermissionStatus.Denied -> deniedContent(permissionStatus)
+        }
+    }
+}
+
+@Composable
 fun NeedPermissionScreen(
     requestPermission: () -> Unit,
     shouldShowRationale: Boolean,

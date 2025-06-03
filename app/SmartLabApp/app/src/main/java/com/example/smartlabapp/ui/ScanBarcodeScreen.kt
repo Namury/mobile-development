@@ -26,13 +26,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartlabapp.R
+import com.example.smartlabapp.models.api.CheckinRequest
+import com.example.smartlabapp.tools.DataCoordinator
+import com.example.smartlabapp.tools.checkinAPI
 import com.example.smartlabapp.ui.theme.SmartLabAppTheme
 import com.example.smartlabapp.ui.components.FeatureThatRequiresCameraPermission
 import com.example.smartlabapp.ui.components.NeedPermissionScreen
@@ -48,7 +54,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 )
 @Composable
 fun ScanBarcodeScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: DeviceViewModel
 ) {
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
     FeatureThatRequiresCameraPermission(
@@ -75,17 +82,19 @@ fun ScanBarcodeScreen(
                         modifier = Modifier.fillMaxHeight(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        PreviewViewComposable()
+                        PreviewViewComposable(viewModel)
                     }
                 }
             }
         }
     )
 }
-
 @androidx.camera.core.ExperimentalGetImage
 @Composable
-fun PreviewViewComposable() {
+fun PreviewViewComposable(
+    viewModel: DeviceViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState()
     AndroidView({ context ->
         val cameraExecutor = Executors.newSingleThreadExecutor()
         val previewView = PreviewView(context).also {
@@ -98,7 +107,7 @@ fun PreviewViewComposable() {
             val preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
+                    it.surfaceProvider = previewView.surfaceProvider
                 }
 
             val imageCapture = ImageCapture.Builder().build()
@@ -107,7 +116,15 @@ fun PreviewViewComposable() {
                 .build()
                 .also {
                     it.setAnalyzer(cameraExecutor, BarcodeAnalyzer{ barcodeValue ->
-                        Toast.makeText(context, "Barcode found: $barcodeValue", Toast.LENGTH_LONG).show()
+                        DataCoordinator.shared.checkinAPI(
+                            onSuccess = {message -> Toast.makeText(context, message, Toast.LENGTH_LONG).show()},
+                            onError = {Toast.makeText(context, "Barcode found: $barcodeValue", Toast.LENGTH_LONG).show()},
+                            request = CheckinRequest(
+                                checkinID = barcodeValue,
+                                deviceImei = uiState.deviceUUID,
+                                deviceID = uiState.deviceID,
+                            )
+                        )
                     })
                 }
 
@@ -166,7 +183,8 @@ class BarcodeAnalyzer(
 fun ScanBarcodeScreenPreview() {
     SmartLabAppTheme {
         ScanBarcodeScreen(
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.fillMaxHeight(),
+            viewModel = viewModel()
         )
     }
 }
